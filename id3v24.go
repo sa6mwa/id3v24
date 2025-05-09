@@ -16,6 +16,16 @@ var (
 	ErrZeroDuration        error = errors.New("duration can not be zero")
 )
 
+type TrackInfo struct {
+	Title     string    `json:"title" yaml:"title,omitempty"`
+	Album     string    `json:"album" yaml:"album,omitempty"`
+	Artist    string    `json:"artist" yaml:"artist,omitempty"`
+	Genre     string    `json:"genre" yaml:"genre,omitempty"`
+	Year      string    `json:"year" yaml:"year,omitempty"`
+	CoverJPEG string    `json:"coverJPEG" yaml:"coverJPEG,omitempty"`
+	Chapters  []Chapter `json:"chapters" yaml:"chapters,omitempty"`
+}
+
 type Chapter struct {
 	Title string `json:"title" yaml:"title,omitempty"`
 	Start string `json:"start" yaml:"start,omitempty"` // e.g. "00:05:00.500"
@@ -149,5 +159,54 @@ func AddCoverJPEG(tag *id3v2.Tag, jpegPath string) error {
 		Picture:     imgData,
 	}
 	tag.AddAttachedPicture(picFrame)
+	return nil
+}
+
+// WriteID3v2Tag writes everything this package is designed for;
+// title, album, arist, genre, year, cover picture (jpeg), and
+// chapters. If any field is empty (zero length or empty slice, etc),
+// it will not be added to the tag. The output mp3 will be modified.
+func WriteID3v2Tag(mp3file string, input TrackInfo) error {
+	di, err := mp3duration.ReadFile(mp3file)
+	if err != nil {
+		return err
+	}
+	tag, err := id3v2.Open(mp3file, id3v2.Options{Parse: false})
+	if err != nil {
+		return err
+	}
+	defer tag.Close()
+	// Important
+	tag.SetVersion(4)
+	// Set frames unless empty...
+	if len([]rune(input.Title)) > 0 {
+		tag.SetTitle(input.Title)
+	}
+	if len([]rune(input.Album)) > 0 {
+		tag.SetAlbum(input.Album)
+	}
+	if len([]rune(input.Artist)) > 0 {
+		tag.SetArtist(input.Artist)
+	}
+	if len([]rune(input.Genre)) > 0 {
+		tag.SetGenre(input.Genre)
+	}
+	if len([]rune(input.Year)) > 0 {
+		tag.SetYear(input.Year)
+	}
+	if len([]rune(input.CoverJPEG)) > 0 {
+		if err := AddCoverJPEG(tag, input.CoverJPEG); err != nil {
+			return err
+		}
+	}
+	if len(input.Chapters) > 0 {
+		if err := AddCHAPAndCTOC(di, tag, input.Chapters); err != nil {
+			return err
+		}
+	}
+	// Save tag information
+	if err := tag.Save(); err != nil {
+		return err
+	}
 	return nil
 }
