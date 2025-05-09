@@ -1,0 +1,59 @@
+(*id3v2.Tag)({
+ frames: (map[string]id3v2.Framer) (len=3) {
+  (string) (len=4) "TALB": (id3v2.TextFrame) {
+   Encoding: (id3v2.Encoding) UTF-8 encoded Unicode,
+   Text: (string) (len=11) "Hello World"
+  },
+  (string) (len=4) "TIT2": (id3v2.TextFrame) {
+   Encoding: (id3v2.Encoding) UTF-8 encoded Unicode,
+   Text: (string) (len=10) "Test Title"
+  },
+  (string) (len=4) "TPE1": (id3v2.TextFrame) {
+   Encoding: (id3v2.Encoding) UTF-8 encoded Unicode,
+   Text: (string) (len=8) "John Doe"
+  }
+ },
+ sequences: (map[string]*id3v2.sequence) (len=2) {
+  (string) (len=4) "CHAP": (*id3v2.sequence)({
+   frames: ([]id3v2.Framer) (len=3) {
+    (id3v2.UnknownFrame) {
+     Body: ([]uint8) (len=49) {
+      00000000  31 00 00 00 00 00 00 00  27 10 ff ff ff ff ff ff  |1.......'.......|
+      00000010  ff ff 54 49 54 32 00 00  00 15 00 00 01 ff fe 43  |..TIT2.........C|
+      00000020  00 68 00 61 00 70 00 74  00 65 00 72 00 20 00 31  |.h.a.p.t.e.r. .1|
+      00000030  00                                                |.|
+     }
+    },
+    (id3v2.UnknownFrame) {
+     Body: ([]uint8) (len=49) {
+      00000000  32 00 00 00 27 10 00 00  50 14 ff ff ff ff ff ff  |2...'...P.......|
+      00000010  ff ff 54 49 54 32 00 00  00 15 00 00 01 ff fe 43  |..TIT2.........C|
+      00000020  00 68 00 61 00 70 00 74  00 65 00 72 00 20 00 32  |.h.a.p.t.e.r. .2|
+      00000030  00                                                |.|
+     }
+    },
+    (id3v2.UnknownFrame) {
+     Body: ([]uint8) (len=49) {
+      00000000  33 00 00 00 50 14 00 00  75 30 ff ff ff ff ff ff  |3...P...u0......|
+      00000010  ff ff 54 49 54 32 00 00  00 15 00 00 01 ff fe 43  |..TIT2.........C|
+      00000020  00 68 00 61 00 70 00 74  00 65 00 72 00 20 00 33  |.h.a.p.t.e.r. .3|
+      00000030  00                                                |.|
+     }
+    }
+   }
+  }),
+  (string) (len=4) "CTOC": (*id3v2.sequence)({
+   frames: ([]id3v2.Framer) (len=1) {
+    (id3v2.UnknownFrame) {
+     Body: ([]uint8) (len=13) {
+      00000000  74 6f 63 00 01 00 03 31  00 32 00 33 00           |toc....1.2.3.|
+     }
+    }
+   }
+  })
+ },
+ defaultEncoding: (id3v2.Encoding) UTF-8 encoded Unicode,
+ reader: (io.Reader) <nil>,
+ originalSize: (int64) 0,
+ version: (uint8) 4
+})

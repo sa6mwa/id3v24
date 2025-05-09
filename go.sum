@@ -1,0 +1,12 @@
+github.com/bogem/id3v2 v1.2.0 h1:hKDF+F1gOgQ5r1QmBCEZUk4MveJbKxCeIDSBU7CQ4oI=
+github.com/bogem/id3v2 v1.2.0/go.mod h1:t78PK5AQ56Q47kizpYiV6gtjj3jfxlz87oFpty8DYs8=
+github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
+github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/sa6mwa/mp3duration v0.0.0-20221104103912-0716b1a5de6e h1:tDBySLzhs1WyhaqH5fdbxFWYVHFapoobnVcuG99OFD0=
+github.com/sa6mwa/mp3duration v0.0.0-20221104103912-0716b1a5de6e/go.mod h1:+QE4ei24uYpCLKmCHShIq8OBjdml1Zj+qVRTn+sKpzQ=
+github.com/tcolgate/mp3 v0.0.0-20170426193717-e79c5a46d300 h1:XQdibLKagjdevRB6vAjVY4qbSr8rQ610YzTkWcxzxSI=
+github.com/tcolgate/mp3 v0.0.0-20170426193717-e79c5a46d300/go.mod h1:FNa/dfN95vAYCNFrIKRrlRo+MBLbwmR9Asa5f2ljmBI=
+golang.org/x/text v0.3.2/go.mod h1:bEr9sfX3Q8Zfm5fL9x+3itogRgK3+ptLWKqgva+5dAk=
+golang.org/x/text v0.25.0 h1:qVyWApTSYLk/drJRO5mDlNYskwQznZmkpV2c8q9zls4=
+golang.org/x/text v0.25.0/go.mod h1:WEdwpYrmk1qmdHvhkSTNPm3app7v4rsT8F2UD6+VHIA=
+golang.org/x/tools v0.0.0-20180917221912-90fa682c2a6e/go.mod h1:n7NCudcB/nEzxVGmLbDWY5pfWTLqBcC2KZ6jyYvM4mQ=
