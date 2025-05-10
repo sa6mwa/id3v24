@@ -289,10 +289,10 @@ func WriteFFmpegChaptersTXT(duration mp3duration.Info, chapters []Chapter) (stri
 //	ffmpeg -i input.flac -i metadatafile -map_metadata 1 output.m4a
 //
 // Returns full path to tempfile or error if something failed.
-func WriteFFmpegMetadataFile(duration mp3duration.Info, input TrackInfo) (string, error) {
+func WriteFFmpegMetadataFile(duration time.Duration, input TrackInfo) (string, error) {
 	var removeTempfile bool
 	var output []byte = []byte(";FFMETADATA1\n")
-	chaptersTXT, err := GetFFmpegChaptersTXT(duration, input.Chapters)
+	chaptersTXT, err := GetFFmpegChaptersTXT(mp3duration.Info{TimeDuration: duration}, input.Chapters)
 	if err != nil {
 		return "", err
 	}

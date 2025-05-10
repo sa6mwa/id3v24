@@ -135,11 +135,7 @@ func TestWriteFFmpegMetadataFile(t *testing.T) {
 		},
 	}
 
-	duration := mp3duration.Info{
-		TimeDuration: 30 * time.Second,
-	}
-
-	ffmetafile, err := WriteFFmpegMetadataFile(duration, trackInfo)
+	ffmetafile, err := WriteFFmpegMetadataFile(30*time.Second, trackInfo)
 	if err != nil {
 		t.Fatal(err)
 	}
