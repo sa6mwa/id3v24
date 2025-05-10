@@ -1,0 +1,25 @@
+;FFMETADATA1
+title=Hello world
+album=Galaxy
+artist=Universe
+genre=Podcast
+track=5
+date=2024-09-17
+
+[CHAPTER]
+TIMEBASE=1/1000
+START=0
+END=10000
+title=Chapter 1
+
+[CHAPTER]
+TIMEBASE=1/1000
+START=10000
+END=20500
+title=Chapter 2
+
+[CHAPTER]
+TIMEBASE=1/1000
+START=20500
+END=30000
+title=Chapter 3

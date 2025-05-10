@@ -1,10 +1,13 @@
 package id3v24
 
 import (
+	"bytes"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	id3v2 "github.com/bogem/id3v2"
@@ -17,13 +20,18 @@ var (
 )
 
 type TrackInfo struct {
-	Title     string    `json:"title" yaml:"title,omitempty"`
-	Album     string    `json:"album" yaml:"album,omitempty"`
-	Artist    string    `json:"artist" yaml:"artist,omitempty"`
-	Genre     string    `json:"genre" yaml:"genre,omitempty"`
-	Year      string    `json:"year" yaml:"year,omitempty"`
-	CoverJPEG string    `json:"coverJPEG" yaml:"coverJPEG,omitempty"`
-	Chapters  []Chapter `json:"chapters" yaml:"chapters,omitempty"`
+	Title       string    `json:"title" yaml:"title,omitempty"`
+	Album       string    `json:"album" yaml:"album,omitempty"`
+	Artist      string    `json:"artist" yaml:"artist,omitempty"`
+	Genre       string    `json:"genre" yaml:"genre,omitempty"`
+	Year        string    `json:"year" yaml:"year,omitempty"`
+	Date        time.Time `json:"date" yaml:"date,omitempty"` // yyyy-mm-dd
+	Track       string    `json:"track" yaml:"track,omitempty"`
+	Comment     string    `json:"comment" yaml:"comment,omitempty"`
+	Description string    `json:"description" yaml:"description,omitempty"`
+	Language    string    `json:"language" yaml:"language,omitempty"`
+	CoverJPEG   string    `json:"coverJPEG" yaml:"coverJPEG,omitempty"`
+	Chapters    []Chapter `json:"chapters" yaml:"chapters,omitempty"`
 }
 
 type Chapter struct {
@@ -209,4 +217,136 @@ func WriteID3v2Tag(mp3file string, input TrackInfo) error {
 		return err
 	}
 	return nil
+}
+
+// GetFFmpegChaptersTXT returns a chapters.txt file for use with
+// FFmpeg when generating e.g m4b files. Maybe strange to also support
+// ffmpeg and m4b in a package for MP3 ID3 tags, but the functionality
+// is already here and chapters in m4b is much better. Returns a
+// chapters.txt as a byte slice or error if something failed.
+func GetFFmpegChaptersTXT(duration mp3duration.Info, chapters []Chapter) ([]byte, error) {
+	var output []byte = []byte(";FFMETADATA1\n")
+	if len(chapters) == 0 {
+		return nil, nil
+	}
+	if duration.TimeDuration == 0 {
+		return nil, ErrZeroDuration
+	}
+	millis := uint32(duration.TimeDuration / time.Millisecond)
+	starts := make([]uint32, len(chapters))
+	for i, ch := range chapters {
+		m, err := ParseTimeToMillis(ch.Start)
+		if err != nil {
+			return nil, err
+		}
+		starts[i] = m
+	}
+	for i, ch := range chapters {
+		start := starts[i]
+		var end uint32
+		if i < len(chapters)-1 {
+			end = starts[i+1]
+		} else {
+			end = millis
+		}
+		output = append(output, []byte(fmt.Sprintf("\n[CHAPTER]\nTIMEBASE=1/1000\nSTART=%d\nEND=%d\ntitle=%s\n",
+			start, end, ch.Title,
+		))...)
+	}
+	return output, nil
+}
+
+// WriteFFmpegChaptersTXT returns a temporary (os.CreateTemp)
+// ffmpeg-compatible chapters.txt file for use if generating e.g an
+// m4b instead of an mp3. Returns full path to tempfile or error if
+// something failed.
+func WriteFFmpegChaptersTXT(duration mp3duration.Info, chapters []Chapter) (string, error) {
+	var removeTempfile bool
+	chaptersTXT, err := GetFFmpegChaptersTXT(duration, chapters)
+	if err != nil {
+		return "", err
+	}
+	f, err := os.CreateTemp("", "*-chapters.txt")
+	if err != nil {
+		return "", err
+	}
+	defer func() {
+		f.Close()
+		if removeTempfile {
+			os.Remove(f.Name())
+		}
+	}()
+	if _, err := f.Write(chaptersTXT); err != nil {
+		removeTempfile = true
+		return "", err
+	}
+	return f.Name(), nil
+}
+
+// WriteFFmpegMetadataFile returns a temporary (os.CreateTemp)
+// ffmpeg-compatible metadata file for use with illustrative example:
+//
+//	ffmpeg -i input.flac -i metadatafile -map_metadata 1 output.m4a
+//
+// Returns full path to tempfile or error if something failed.
+func WriteFFmpegMetadataFile(duration mp3duration.Info, input TrackInfo) (string, error) {
+	var removeTempfile bool
+	var output []byte = []byte(";FFMETADATA1\n")
+	chaptersTXT, err := GetFFmpegChaptersTXT(duration, input.Chapters)
+	if err != nil {
+		return "", err
+	}
+	if chaptersTXT == nil {
+		chaptersTXT = make([]byte, 0)
+	} else {
+		// Remove ";FFMETADATA" line from chaptersTXT
+		chaptersTXT = bytes.Replace(chaptersTXT, output, nil, 1)
+	}
+	f, err := os.CreateTemp("", "*-ffmetadata.txt")
+	if err != nil {
+		return "", err
+	}
+	defer func() {
+		f.Close()
+		if removeTempfile {
+			os.Remove(f.Name())
+		}
+	}()
+	kvpairs := []map[string]string{
+		{"title": input.Title},
+		{"album": input.Album},
+		{"artist": input.Artist},
+		{"genre": input.Genre},
+		{"track": input.Track},
+		{"comment": input.Comment},
+		{"language": input.Language},
+		{"description": input.Description},
+	}
+	if !input.Date.IsZero() {
+		kvpairs = append(kvpairs, map[string]string{"date": input.Date.Format("2006-01-02")})
+	}
+	for i := range kvpairs {
+		for k, v := range kvpairs[i] {
+			if len([]rune(v)) > 0 {
+				appendKVPair(&output, k, v)
+			}
+		}
+	}
+	// Append chapters
+	output = append(output, chaptersTXT...)
+	if _, err := f.Write(output); err != nil {
+		removeTempfile = true
+		return "", err
+	}
+	return f.Name(), nil
+}
+
+func appendKVPair(output *[]byte, key, value string) {
+	clean := strings.Map(func(r rune) rune {
+		if r == '\n' || r == '\r' {
+			return -1 // remove linefeeds
+		}
+		return r
+	}, value)
+	*output = append(*output, []byte(key+"="+strings.TrimSpace(clean)+"\n")...)
 }
