@@ -4,6 +4,7 @@ album=Galaxy
 artist=Universe
 genre=Podcast
 track=5
+copyright=Copyright 2024 Universe
 date=2024-09-17
 
 [CHAPTER]

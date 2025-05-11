@@ -145,7 +145,6 @@ func TestWriteFFmpegMetadataFile(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
 	testdata, err := os.ReadFile(testdataFile)
 	if err != nil {
 		t.Fatal(err)

@@ -30,6 +30,7 @@ type TrackInfo struct {
 	Comment     string    `json:"comment" yaml:"comment,omitempty"`
 	Description string    `json:"description" yaml:"description,omitempty"`
 	Language    string    `json:"language" yaml:"language,omitempty"`
+	Copyright   string    `json:"copyright" yaml:"copyright,omitempty"`
 	CoverJPEG   string    `json:"coverJPEG" yaml:"coverJPEG,omitempty"`
 	Chapters    []Chapter `json:"chapters" yaml:"chapters,omitempty"`
 }
@@ -39,21 +40,29 @@ type Chapter struct {
 	Start string `json:"start" yaml:"start,omitempty"` // e.g. "00:05:00.500"
 }
 
-func ParseTimeToMillis(t string) (uint32, error) {
+func StringTimeToMillis(t string) (uint32, error) {
+	d, err := StringTimeToTime(t)
+	if err != nil {
+		return 0, err
+	}
+	return uint32((time.Duration(d.Hour())*time.Hour +
+		time.Duration(d.Minute())*time.Minute +
+		time.Duration(d.Second())*time.Second +
+		time.Duration(d.Nanosecond())) / time.Millisecond), nil
+}
+
+func StringTimeToTime(t string) (time.Time, error) {
 	d, err := time.Parse("15:04:05.000", t)
 	if err != nil {
 		d, err = time.Parse("15:04:05.0", t)
 		if err != nil {
 			d, err = time.Parse("15:04:05", t)
 			if err != nil {
-				return 0, ErrBadChapterStartTime
+				return time.Time{}, ErrBadChapterStartTime
 			}
 		}
 	}
-	return uint32((time.Duration(d.Hour())*time.Hour +
-		time.Duration(d.Minute())*time.Minute +
-		time.Duration(d.Second())*time.Second +
-		time.Duration(d.Nanosecond())) / time.Millisecond), nil
+	return d, nil
 }
 
 func GetMP3Duration(mp3path string) (time.Duration, error) {
@@ -99,7 +108,7 @@ func AddCHAPAndCTOC(duration mp3duration.Info, tag *id3v2.Tag, chapters []Chapte
 	chapterIDs := []string{}
 
 	for i, ch := range chapters {
-		m, err := ParseTimeToMillis(ch.Start)
+		m, err := StringTimeToMillis(ch.Start)
 		if err != nil {
 			return err
 		}
@@ -235,7 +244,7 @@ func GetFFmpegChaptersTXT(duration mp3duration.Info, chapters []Chapter) ([]byte
 	millis := uint32(duration.TimeDuration / time.Millisecond)
 	starts := make([]uint32, len(chapters))
 	for i, ch := range chapters {
-		m, err := ParseTimeToMillis(ch.Start)
+		m, err := StringTimeToMillis(ch.Start)
 		if err != nil {
 			return nil, err
 		}
@@ -286,7 +295,8 @@ func WriteFFmpegChaptersTXT(duration mp3duration.Info, chapters []Chapter) (stri
 // WriteFFmpegMetadataFile returns a temporary (os.CreateTemp)
 // ffmpeg-compatible metadata file for use with illustrative example:
 //
-//	ffmpeg -i input.flac -i metadatafile -map_metadata 1 output.m4a
+//	ffmpeg -i input.flac output.m4a
+//	ffmpeg -i output.m4a -i metadata.txt -map_metadata 1 -codec copy final_output.m4a
 //
 // Returns full path to tempfile or error if something failed.
 func WriteFFmpegMetadataFile(duration time.Duration, input TrackInfo) (string, error) {
@@ -321,6 +331,7 @@ func WriteFFmpegMetadataFile(duration time.Duration, input TrackInfo) (string, e
 		{"comment": input.Comment},
 		{"language": input.Language},
 		{"description": input.Description},
+		{"copyright": fmt.Sprintf("Copyright %s %s", input.Date.Format("2006"), input.Artist)},
 	}
 	if !input.Date.IsZero() {
 		kvpairs = append(kvpairs, map[string]string{"date": input.Date.Format("2006-01-02")})
